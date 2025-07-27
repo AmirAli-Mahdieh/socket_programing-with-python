@@ -2,7 +2,7 @@ class people:
     def __init__(self, user_name, age, city):
         self.__user_name=user_name
         self.__city=city
-        if age>0 :
+        if int(age)>0 :
             self.__age=age
         else:
             return 0

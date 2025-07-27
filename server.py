@@ -2,46 +2,57 @@ import people_class
 import socket
 def client_communication(the_client):
     while True:
-        for i in range(people_list.count()):
-            my_socket.send(f"{i+1}- {people_list[i]}")
-        my_socket.send("Enter 1: add a person, 2: edit a person place, 3: recive a person, 4: delete a person\n".encode())
-        cmd= the_client.recv(1024).encode()
-        if cmd==1:
-            my_socket.send("Enter :name age place")
-            name , age, place= my_socket.recv(1024).decode().splite(" ")
+        main_message=""
+        for i in range(len(people_list)):
+            main_message+=f"{i+1}- {people_list[i].get_user_name()}"
+        main_message+="\nEnter 1: add a person, 2: edit a person place, 3: recive a person, 4: delete a person\n"
+        the_client.send(main_message.encode())
+        cmd= the_client.recv(1024).decode()
+        if int(cmd)==1:
+            the_client.send("Enter :name age place".encode())
+            name , age, place= the_client.recv(1024).decode().split(" ")
             t_person= people_class.people(name, age, place)
             people_list.append(t_person)
-        elif cmd==2:
-            my_socket.send("Enter number of person and its new place:")
-            j , new_place=my_socket.recv(1024).decode().splite(" ")
-            if j-1<people_list.count():
-                people_list[j-1].set_city(new_place)
-        elif cmd==3:
-            my_socket.send("Enter number of person to get its info")
-            j= my_socket.recv(1024).decode()
-            if j-1<people_list.count():
-                name, age, city= people_list[j-1].get_all()
-                my_socket.send("{name}:{age}, {city}".encode())
-        elif cmd==4:
-            my_socket.send("Enter number of person to delete:")
-            j= my_socket.recv(1024).decode()
-            if j-1<people_list.count() and j>=0:
-                people_list.pop(j-1)
+            the_client.send("done!".encode())
+        elif int(cmd)==2:
+            the_client.send("Enter number of person and its new place:".encode())
+            j , new_place=the_client.recv(1024).decode().split(" ")
+            if int(j)-1<len(people_list):
+                people_list[int(j)-1].set_city(new_place)
+                the_client.send("done!".encode())
+            else:
+                the_client.send("invalid input")
+        elif int(cmd)==3:
+            the_client.send("Enter number of person to get its info".encode())
+            j= the_client.recv(1024).decode()
+            if int(j)-1<len(people_list):
+                name, age, city= people_list[int(j)-1].get_all()
+                the_client.send(f"{name}:{age}, {city}".encode())
+        elif int(cmd)==4:
+            the_client.send("Enter number of person to delete:".encode())
+            j= the_client.recv(1024).decode()
+            if int(j)-1<len(people_list) and int(j)>=0:
+                people_list.pop(int(j)-1)
+                the_client.send("done!".encode())
+            else:
+                the_client.send("invalid input")
         else:
             break
     the_client.close()
             
-people_list=[]
+people_list=[people_class.people("david", 10, "isfahan"), people_class.people("john", 25, "tehran")]
 clients_list=["ali", "amir", "ahmad"]
 my_socket= socket.socket()
-my_socket.bind(('', 80))
+my_socket.bind(('', 12345))
 my_socket.listen(5)
 print ("server is listening")
 while True:
     the_client, addr= my_socket.accept()
     message= the_client.recv(1024).decode()
     if message=="ali":
-        the_client.send("welcome".encode())
+        print("connected")
+        the_client.send("server: welcome".encode())
+        client_communication(the_client)
     else:
         the_client.send("not valid".encode())
         the_client.close()
