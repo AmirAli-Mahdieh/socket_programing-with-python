@@ -1,6 +1,6 @@
 import people_class
 import socket
-def client_communication(the_client):
+def client_communication(the_client, the_name):
     while True:
         main_message=""
         for i in range(len(people_list)):
@@ -14,12 +14,14 @@ def client_communication(the_client):
             t_person= people_class.people(name, age, place)
             people_list.append(t_person)
             the_client.send("done!".encode())
+            print(the_name,": adde new member:",name)
         elif int(cmd)==2:
             the_client.send("Enter number of person and its new place:".encode())
             j , new_place=the_client.recv(1024).decode().split(" ")
             if int(j)-1<len(people_list):
                 people_list[int(j)-1].set_city(new_place)
                 the_client.send("done!".encode())
+                print(the_name,": changed info of ", people_list[int(j)-1].get_user_name())
             else:
                 the_client.send("invalid input")
         elif int(cmd)==3:
@@ -28,18 +30,28 @@ def client_communication(the_client):
             if int(j)-1<len(people_list):
                 name, age, city= people_list[int(j)-1].get_all()
                 the_client.send(f"{name}:{age}, {city}".encode())
+                print(the_name,f": got {name} infos")
         elif int(cmd)==4:
             the_client.send("Enter number of person to delete:".encode())
             j= the_client.recv(1024).decode()
             if int(j)-1<len(people_list) and int(j)>=0:
+                print(the_name,f": deleted {people_list[int(j)-1].get_user_name()}")
                 people_list.pop(int(j)-1)
                 the_client.send("done!".encode())
+                
             else:
                 the_client.send("invalid input")
         else:
             break
     the_client.close()
-            
+
+def sign_in(name):
+    with open("vaild_clients.txt", 'r', encoding="utf-8") as file:
+        for i in file:
+            if i.strip()==name:
+                return True
+        return False
+
 people_list=[people_class.people("david", 10, "isfahan"), people_class.people("john", 25, "tehran")]
 clients_list=["ali", "amir", "ahmad"]
 my_socket= socket.socket()
@@ -48,11 +60,11 @@ my_socket.listen(5)
 print ("server is listening")
 while True:
     the_client, addr= my_socket.accept()
-    message= the_client.recv(1024).decode()
-    if message=="ali":
+    the_name= the_client.recv(1024).decode()
+    if sign_in(the_name):
         print("connected")
         the_client.send("server: welcome".encode())
-        client_communication(the_client)
+        client_communication(the_client, the_name)
     else:
         the_client.send("not valid".encode())
         the_client.close()
